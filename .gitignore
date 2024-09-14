@@ -1,0 +1,16 @@
+.DS_Store
+.idea
+*.log
+tmp/
+
+frontend/*.tern-port
+frontend/node_modules/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/*.tsbuildinfo
+frontend/.npm
+frontend/.eslintcache
+
+server/target
+server/.env
