@@ -13,3 +13,4 @@ frontend/.npm
 frontend/.eslintcache
 
 server/target
+server/.env
