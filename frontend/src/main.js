@@ -4,6 +4,8 @@ let controller;
 let defaultEnvironment;
 let state = 0
 let points = []
+let curves = [[]]
+let drawingLate = false
 import * as THREE from "three"
 import * as M from "three.meshline"
 import { drawing } from '$lib/store'
@@ -47,18 +49,16 @@ export function init(func) {
     // Don't add the XREstimatedLight to the scene initially.
     // It doesn't have any estimated lighting values until an AR session starts.
 
-    let button = ARButton.createButton( renderer, {  } ) 
+    let button = ARButton.createButton( renderer, { domOverlay: {root: document.body} } ) 
     button.classList.add("button")
     // In order for lighting estimation to work, 'light-estimation' must be included as either an optional or required feature.
     document.body.appendChild( button );
 
 
-    function onSelect() {
-
-    }
     window.addEventListener( 'resize', onWindowResize );
     renderer.domElement.addEventListener("touchstart", () => {
         drawing = true
+        drawingLate = true
     })
     renderer.domElement.addEventListener("touchend", () => {
         drawing = false
@@ -81,6 +81,10 @@ function animate() {
     renderer.render( scene, camera );
     if (!drawing) {
         state = 0;
+        if (drawingLate) {
+            drawingLate = false;
+            func(curves)
+        }
         return;
     }
     switch(state) {
@@ -92,7 +96,7 @@ function animate() {
             break;
         case 2:
             points[2] = camera.position;
-            func(points)
+            curves.push(points)
             points[0] = camera.position;
             state = 0;
     }
