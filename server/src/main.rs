@@ -91,8 +91,6 @@ async fn main() -> Result<()> {
     let state = Arc::new(RwLock::from(state));
     spawn(stroke_collector(stroke_rx, Arc::clone(&state)));
 
-
-
     let app = Router::new()
         .route("/", get(page))
         .route("/ws", get(handler))
@@ -133,6 +131,7 @@ async fn handler(ws: WebSocketUpgrade, State(state): State<Arc<RwLock<AppState>>
         // send initial data
         let lock = state_handle.read().await;
         socket.send(axum::extract::ws::Message::Text(serde_json::to_string(&lock.strokes).expect("strokes to ser"))).await.ok();
+        drop(lock);
         trace!("sent old data");
         websocketer(rx, tx, socket).await.ok();
     })
