@@ -2,6 +2,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::{Context, Result};
+use axum::extract::ws::Message;
 use axum::extract::ws::WebSocket;
 use axum::extract::State;
 use axum::extract::WebSocketUpgrade;
@@ -144,7 +145,14 @@ async fn websocketer(mut rx: Receiver<Stroke>, tx: Sender<Stroke>, mut ws: WebSo
             m = ws.recv() =>  {
                 trace!("something wsy happened");
                 if let Some(Ok(m)) = m {
-                    let maybe_stroke = serde_json::from_slice::<Stroke>(&m.into_data());
+                    if let Message::Close(e) = m {
+                        trace!("lost the socket: {e:?}");
+                        break Ok(())
+                    }
+                    let Ok(text) = &m.into_text() else {
+                        break Ok(())
+                    };
+                    let maybe_stroke = serde_json::from_str::<Stroke>(&text);
                     if let Ok(stroke) = maybe_stroke {
                         tx.send(stroke).expect("server to be live");
                     }
