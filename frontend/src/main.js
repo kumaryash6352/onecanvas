@@ -6,6 +6,7 @@ let state = 0
 let points = []
 let curves = [[]]
 let drawingLate = false
+import { XRGestures } from '$lib/XRGestures';
 import * as THREE from "three"
 import * as M from "three.meshline"
 import { drawing } from '$lib/store'
@@ -38,7 +39,9 @@ export function init(func) {
     // scene.add( defaultLight );
 
     //
-
+    function select() {
+        console.log("SELECT")
+    }
     renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } );
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
@@ -53,14 +56,16 @@ export function init(func) {
     button.classList.add("button")
     // In order for lighting estimation to work, 'light-estimation' must be included as either an optional or required feature.
     document.body.appendChild( button );
-
+    let touchListen = new XRGestures(renderer)
 
     window.addEventListener( 'resize', onWindowResize );
-    renderer.domElement.addEventListener("touchstart", () => {
+    touchListen.addEventListener("tap", () => {
+        console.log("START")
         drawing = true
         drawingLate = true
     })
-    renderer.domElement.addEventListener("touchend", () => {
+    touchListen.addEventListener("tap", () => {
+        console.log("WHOA")
         drawing = false
     })
 }
