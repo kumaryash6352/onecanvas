@@ -15,3 +15,5 @@ frontend/.eslintcache
 server/target
 server/.env
 server/*.pem
+
+viewer/target

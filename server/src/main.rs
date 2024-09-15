@@ -11,6 +11,7 @@ use axum::routing::get;
 use axum::debug_handler;
 use axum::Router;
 use axum_server::tls_rustls::RustlsConfig;
+use log::error;
 use tokio::select;
 use log::info;
 use log::trace;
@@ -90,7 +91,7 @@ async fn main() -> Result<()> {
     };
 
     let state = Arc::new(RwLock::from(state));
-    spawn(stroke_collector(stroke_rx, Arc::clone(&state)));
+    spawn(stroke_collector(stroke_rx, Arc::clone(&state), client));
 
     let app = Router::new()
         .route("/", get(page))
@@ -168,15 +169,23 @@ async fn websocketer(mut rx: Receiver<Stroke>, tx: Sender<Stroke>, mut ws: WebSo
     }
 }
 
-async fn stroke_collector(rx: Receiver<Stroke>, state: Arc<RwLock<AppState>>) {
+async fn stroke_collector(rx: Receiver<Stroke>, state: Arc<RwLock<AppState>>, mongo: Client) {
     const SLEEP: Duration = Duration::from_secs(20);
     let mut stream = BroadcastStream::new(rx);
     loop {
         sleep(SLEEP).await;
         while let Some(Ok(stroke)) = stream.next().await {
             let mut lock = state.write().await;
-            lock.strokes.push(stroke);
+            lock.strokes.push(stroke.clone());
             drop(lock);
+            if let Err(e) = mongo.database("onecanvas")
+                 .collection::<Stroke>("strokes")
+                .insert_one(stroke)
+                .await {
+                    error!("failed syncing changes to mongodb: {e}");
+                }
+
+
         }
     }
 }
