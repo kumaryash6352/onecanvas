@@ -152,6 +152,7 @@ async fn websocketer(mut rx: Receiver<Stroke>, tx: Sender<Stroke>, mut ws: WebSo
                     let Ok(text) = &m.into_text() else {
                         break Ok(())
                     };
+                    trace!("cli -> server: \"{text}\"");
                     let maybe_stroke = serde_json::from_str::<Stroke>(&text);
                     if let Ok(stroke) = maybe_stroke {
                         tx.send(stroke).expect("server to be live");
