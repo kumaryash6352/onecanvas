@@ -138,6 +138,7 @@ async fn websocketer(mut rx: Receiver<Stroke>, tx: Sender<Stroke>, mut ws: WebSo
         select! {
             Ok(s) = rx.recv() => ws.send(axum::extract::ws::Message::Text(serde_json::to_string(&s).expect("stroke to always serialize"))).await?,
             m = ws.recv() =>  {
+                trace!("something wsy happened");
                 if let Some(Ok(m)) = m {
                     let maybe_stroke = serde_json::from_slice::<Stroke>(&m.into_data());
                     if let Ok(stroke) = maybe_stroke {
@@ -148,6 +149,7 @@ async fn websocketer(mut rx: Receiver<Stroke>, tx: Sender<Stroke>, mut ws: WebSo
                 }
             }
         }
+        trace!("something wsy happened");
     }
 }
 
