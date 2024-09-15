@@ -49,6 +49,7 @@ class XRGestures extends THREE.EventDispatcher{
             self.touchCount++;
             
             console.log( `onSelectStart touchCount: ${ self.touchCount }` );
+            globalThis.selectstart()
         }
         
         function onSelectEnd( ){
@@ -79,6 +80,7 @@ class XRGestures extends THREE.EventDispatcher{
             data.startPosition = undefined;
             
             self.touchCount--;
+            globalThis.selectend()
         }
     }
     

@@ -4,13 +4,13 @@ let controller;
 let defaultEnvironment;
 let state = 0
 let points = []
-let curves = [[]]
+let curves = []
+let drawing = false
 let drawingLate = false
 import { XRGestures } from '$lib/XRGestures';
 import * as THREE from "three"
 import * as M from "three.meshline"
-import { drawing } from '$lib/store'
-export function init(func) {
+export function init() {
 
     const container = document.createElement( 'div' );
     const grabby = document.getElementById("dummy")
@@ -34,13 +34,30 @@ export function init(func) {
     const curveObject = new THREE.Line( geometry, material );
 
     scene.add(curveObject);
-    const defaultLight = new THREE.HemisphereLight( 0xffffff, 0xbbbbff, 1 );
     // defaultLight.position.set( 0.5, 1, 0.25 );
     // scene.add( defaultLight );
 
     //
-    function select() {
-        console.log("SELECT")
+
+    globalThis.addCurve = (curve) => {
+        curve['points'].forEach(element => {
+            let temp = []   
+
+            element.forEach(e => {
+                temp.push(new THREE.Vector3().fromArray(e))
+            })
+            console.log(temp)
+            scene.add(new THREE.Line(
+                new THREE.BufferGeometry().setFromPoints(new THREE.QuadraticBezierCurve3(temp[0], temp[1], temp[2]).getPoints(5)),
+                new THREE.LineBasicMaterial( { 
+                    color: Math.floor(curve['color'][0] * 255) * 0x10000
+                        + Math.floor(curve['color'][1] * 255) * 0x100
+                        + Math.floor(curve['color'][2] * 255) * 0x1,
+                    linewidth: 8 
+                } )
+            ))
+        });
+        
     }
     renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } );
     renderer.setPixelRatio( window.devicePixelRatio );
@@ -52,22 +69,20 @@ export function init(func) {
     // Don't add the XREstimatedLight to the scene initially.
     // It doesn't have any estimated lighting values until an AR session starts.
 
-    let button = ARButton.createButton( renderer, { domOverlay: {root: document.body} } ) 
+    let button = ARButton.createButton( renderer, { } ) 
     button.classList.add("button")
     // In order for lighting estimation to work, 'light-estimation' must be included as either an optional or required feature.
     document.body.appendChild( button );
     let touchListen = new XRGestures(renderer)
 
     window.addEventListener( 'resize', onWindowResize );
-    touchListen.addEventListener("tap", () => {
-        console.log("START")
+    globalThis.selectstart = () => {
         drawing = true
         drawingLate = true
-    })
-    touchListen.addEventListener("tap", () => {
-        console.log("WHOA")
+    }
+    globalThis.selectend = () => {
         drawing = false
-    })
+    }
 }
 
 function onWindowResize() {
@@ -88,21 +103,21 @@ function animate() {
         state = 0;
         if (drawingLate) {
             drawingLate = false;
-            func(curves)
+            globalThis.sendCurve(curves)
         }
         return;
     }
     switch(state) {
         case 0:
-            points[0] = camera.position;
+            points[0] = [...camera.position];
             break;
         case 1:
-            points[1] = camera.position;
+            points[1] = [...camera.position];
             break;
         case 2:
-            points[2] = camera.position;
-            curves.push(points)
-            points[0] = camera.position;
+            points[2] = [...camera.position];
+            curves.push([...points])
+            points[0] = [...camera.position];
             state = 0;
     }
     state++
