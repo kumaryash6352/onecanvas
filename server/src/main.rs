@@ -2,6 +2,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::{Context, Result};
+use axum::extract::ws::Message;
 use axum::extract::ws::WebSocket;
 use axum::extract::State;
 use axum::extract::WebSocketUpgrade;
@@ -13,6 +14,7 @@ use axum_server::tls_rustls::RustlsConfig;
 use tokio::select;
 use log::info;
 use log::trace;
+use log::warn;
 use futures::*;
 use mongodb::options::ServerApi;
 use mongodb::options::ServerApiVersion;
@@ -90,8 +92,6 @@ async fn main() -> Result<()> {
     let state = Arc::new(RwLock::from(state));
     spawn(stroke_collector(stroke_rx, Arc::clone(&state)));
 
-
-
     let app = Router::new()
         .route("/", get(page))
         .route("/ws", get(handler))
@@ -120,15 +120,20 @@ async fn page() -> &'static str { " hello " }
 
 #[debug_handler]
 async fn handler(ws: WebSocketUpgrade, State(state): State<Arc<RwLock<AppState>>>) -> Response {
+    trace!("starting ws handler");
     let (rx, tx) = {
         let lock = state.read().await;
         (lock.stroke_rx.resubscribe(), lock.stroke_tx.clone())
     };
     let state_handle = Arc::clone(&state);
+    trace!("starting ws upgrade");
     ws.on_upgrade(move |mut socket| async move {
+        trace!("ws upgrade");
         // send initial data
         let lock = state_handle.read().await;
         socket.send(axum::extract::ws::Message::Text(serde_json::to_string(&lock.strokes).expect("strokes to ser"))).await.ok();
+        drop(lock);
+        trace!("sent old data");
         websocketer(rx, tx, socket).await.ok();
     })
 }
@@ -140,9 +145,19 @@ async fn websocketer(mut rx: Receiver<Stroke>, tx: Sender<Stroke>, mut ws: WebSo
             m = ws.recv() =>  {
                 trace!("something wsy happened");
                 if let Some(Ok(m)) = m {
-                    let maybe_stroke = serde_json::from_slice::<Stroke>(&m.into_data());
+                    if let Message::Close(e) = m {
+                        trace!("lost the socket: {e:?}");
+                        break Ok(())
+                    }
+                    let Ok(text) = &m.into_text() else {
+                        break Ok(())
+                    };
+                    trace!("cli -> server: \"{text}\"");
+                    let maybe_stroke = serde_json::from_str::<Stroke>(&text);
                     if let Ok(stroke) = maybe_stroke {
                         tx.send(stroke).expect("server to be live");
+                    } else {
+                        warn!("recv'd malformed stroke");
                     }
                 } else {
                     break Ok(())
@@ -158,10 +173,10 @@ async fn stroke_collector(rx: Receiver<Stroke>, state: Arc<RwLock<AppState>>) {
     let mut stream = BroadcastStream::new(rx);
     loop {
         sleep(SLEEP).await;
-        let mut lock = state.write().await;
         while let Some(Ok(stroke)) = stream.next().await {
+            let mut lock = state.write().await;
             lock.strokes.push(stroke);
+            drop(lock);
         }
-        drop(lock);
     }
 }
