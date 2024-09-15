@@ -120,15 +120,19 @@ async fn page() -> &'static str { " hello " }
 
 #[debug_handler]
 async fn handler(ws: WebSocketUpgrade, State(state): State<Arc<RwLock<AppState>>>) -> Response {
+    trace!("starting ws handler");
     let (rx, tx) = {
         let lock = state.read().await;
         (lock.stroke_rx.resubscribe(), lock.stroke_tx.clone())
     };
     let state_handle = Arc::clone(&state);
+    trace!("starting ws upgrade");
     ws.on_upgrade(move |mut socket| async move {
+        trace!("ws upgrade");
         // send initial data
         let lock = state_handle.read().await;
         socket.send(axum::extract::ws::Message::Text(serde_json::to_string(&lock.strokes).expect("strokes to ser"))).await.ok();
+        trace!("sent old data");
         websocketer(rx, tx, socket).await.ok();
     })
 }
