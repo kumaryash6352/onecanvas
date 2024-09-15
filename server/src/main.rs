@@ -171,10 +171,10 @@ async fn stroke_collector(rx: Receiver<Stroke>, state: Arc<RwLock<AppState>>) {
     let mut stream = BroadcastStream::new(rx);
     loop {
         sleep(SLEEP).await;
-        let mut lock = state.write().await;
         while let Some(Ok(stroke)) = stream.next().await {
+            let mut lock = state.write().await;
             lock.strokes.push(stroke);
+            drop(lock);
         }
-        drop(lock);
     }
 }
