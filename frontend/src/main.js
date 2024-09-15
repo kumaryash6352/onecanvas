@@ -56,6 +56,7 @@ export function init() {
     button.classList.add("button")
     button.style.background = "black"
     button.style.opacity = 1
+    
     // In order for lighting estimation to work, 'light-estimation' must be included as either an optional or required feature.
     document.body.appendChild( button );
     let touchListen = new XRGestures(renderer)

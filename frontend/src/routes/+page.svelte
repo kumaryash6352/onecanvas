@@ -61,7 +61,10 @@
 </script>
 <div class="absolute" id="dummy">
 </div>
-
+<div class="absolute w-[100vw] h-[100vh] flex flex-col">
+    <div class="m-auto text-[13vw] mb-2 font-black mt-[30vh]">Onecanvas</div>
+    <div class="m-auto mt-2">Click the button below to center your phone</div>
+</div>
 <style>
     
 </style>
