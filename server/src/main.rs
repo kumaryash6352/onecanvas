@@ -9,13 +9,11 @@ use axum::response::Response;
 use axum::routing::get;
 use axum::debug_handler;
 use axum::Router;
-use tokio::net::TcpListener;
+use axum_server::tls_rustls::RustlsConfig;
 use tokio::select;
-use glam::Vec3;
 use log::info;
 use log::trace;
 use futures::*;
-use mongodb::bson::Document;
 use mongodb::options::ServerApi;
 use mongodb::options::ServerApiVersion;
 use mongodb::Client;
@@ -46,10 +44,8 @@ struct AppState {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Stroke {
-    points: Vec<(Vec3, Vec3, Vec3)>,
+    points: Vec<Vec<[f32; 3]>>,
     color: [f32; 3],
-    owner: usize,
-    id: usize
 }
 
 #[tokio::main]
@@ -104,9 +100,17 @@ async fn main() -> Result<()> {
 
     let nic = env("HOST_NIC").expect("HOST_NIC to be set");
     let port = env("HOST_PORT").expect("HOST_PORT to be set");
-    let listener = TcpListener::bind(format!("{nic}:{port}")).await?;
+    info!("Binding to {nic}:{port}...");
+    let config = RustlsConfig::from_pem_file(
+        "cert.pem",
+        "key.pem",
+    )
+    .await
+    .unwrap();
 
-    axum::serve(listener, app).await?;
+    info!("Serving!");
+    //axum::serve(listener, app).await?;
+    axum_server::tls_rustls::bind_rustls(format!("{nic}:{port}").parse().expect("nic:port to parse"), config).serve(app.into_make_service()).await?;
 
     Ok(())
 }

@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.88"
 axum = { version = "0.7.5", features = ["ws", "macros"] }
+axum-server = { version = "0.7.1", features = ["openssl", "rustls", "tls-rustls"] }
 dotenvy = "0.15.7"
 env_logger = "0.11.5"
 futures = "0.3.30"
@@ -13,6 +14,7 @@ glam = { version = "0.29.0", features = ["serde"] }
 kdtree = "0.7.0"
 log = "0.4.22"
 mongodb = "3.1.0"
+rustls = "0.23.13"
 serde = "1.0.210"
 serde_json = "1.0.128"
 thiserror = "1.0.63"
