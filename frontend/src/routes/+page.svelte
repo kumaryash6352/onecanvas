@@ -1,55 +1,32 @@
 <script lang="ts">
-    import { xrSupported } from '$lib/store'
+    import { xrSupported, enabled } from '$lib/store'
     import { onMount } from 'svelte';
-    import { T, Canvas,  } from "@threlte/core"
-    import { XR , } from '@threlte/xr'
-    import { OrbitControls, Text, MeshLineGeometry, MeshLineMaterial, } from '@threlte/extras'
-    import { ARButton, XRButton } from '@threlte/xr'
-    import * as THREE from 'three'
-    onMount(() => {
-        
-    })
-    async function start(session: XRSession) {
+    import { writable } from 'svelte/store';
+    import { init } from '../main';
+    let ws: WebSocket
+    function sendCurve(curve: number[]) {
         
     }
-    const curve = new THREE.QuadraticBezierCurve3(
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(1, 0, 0),
-        new THREE.Vector3(0, 1, 0),
-    )
-    const points = curve.getPoints(50)
-</script>
-<XRButton
-  sessionInit={{
-    domOverlay: typeof document !== 'undefined' ? { root: document.body } : undefined,
-    requiredFeatures: [],
-    optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking', 'layers', 'hit-test', 'plane-detection', 'image-tracking'],
-    
-  
-  }}
-  {...$$restProps}
-  mode="immersive-ar"
-  on:click
-  on:error
-/>
-<Canvas >
-    
-    <XR foveation={1} on:sessionstart={(event) => {start(event.target);}}>
-        <T.PerspectiveCamera >
-            <OrbitControls />     
-        </T.PerspectiveCamera>
+    onMount(() => {
+        init()
+        ws = new WebSocket('wss://192.168.132.217/ws:8080');
+        if (ws) {
+            ws.onopen = () => {
+                console.log("Yippee....")
+            }
+            ws.onerror = (event) => {
+                console.log(event)
+            }
+        }
         
-        <T.Mesh position={[0, 1.6, -1]}>
-            <MeshLineGeometry {points} shape='taper'/>
-            <MeshLineMaterial color={0xffffff}/>
-        </T.Mesh>
-
-        <Text
-            position={[0, 1.6, -1]}
-            text="aaaa"
-        />
-    </XR>
-</Canvas>
+    })
+    
+</script>
+<div class="absolute" id="dummy">
+</div>
+<div class="absolute top-0 left-0 w-[100vw] h-[100vh] flex">
+    <div class="rounded-full bg-white border-black border-4 w-[40vw] h-[40vw] m-auto mb-2 z-[10000000000000000] data-[disabled]:opacity-0 data-[disabled]:pointer-events-none" data-disabled={false}/>
+</div>
 <style>
     
 </style>
