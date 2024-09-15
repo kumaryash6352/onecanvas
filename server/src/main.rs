@@ -33,6 +33,7 @@ use tokio::sync::RwLock;
 use tokio::time::sleep;
 use tokio_stream::wrappers::BroadcastStream;
 use tokio_stream::StreamExt;
+use tower_http::services::ServeDir;
 
 fn env(key: &str) -> Option<String> {
     std::env::var(key).ok()
@@ -94,7 +95,7 @@ async fn main() -> Result<()> {
     spawn(stroke_collector(stroke_rx, Arc::clone(&state), client));
 
     let app = Router::new()
-        .route("/", get(page))
+        .nest_service("/static", ServeDir::new("static"))
         .route("/ws", get(handler))
         .with_state(state)
         ;
