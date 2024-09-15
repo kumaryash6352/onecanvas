@@ -61,9 +61,6 @@
 </script>
 <div class="absolute" id="dummy">
 </div>
-<div class="absolute top-0 left-0 w-[100vw] h-[100vh] flex">
-    <div class="rounded-full bg-white border-black border-4 w-[40vw] h-[40vw] m-auto  data-[disabled]:opacity-0 data-[disabled]:pointer-events-none" data-disabled={null}/>
-</div>
 
 <style>
     
