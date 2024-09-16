@@ -3,7 +3,6 @@
     import { onMount } from 'svelte';
     import { writable } from 'svelte/store';
     import { init } from '../main';
-    import moment from 'moment';
     let colors = [
         [1, 1, 1],
         [1, 0, 0],
